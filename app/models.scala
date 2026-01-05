@@ -1,12 +1,42 @@
-import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonProperty}
+import upickle.default.*
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-case class SpotifyEntry(@JsonProperty("ts")timestamp: String,
-                        @JsonProperty("master_metadata_track_name")track: String,
-                        @JsonProperty("master_metadata_album_artist_name")artist: String,
-                        @JsonProperty("master_metadata_album_album_name")album: String,
-                        @JsonProperty("reason_start")reasonStart: String,
-                        @JsonProperty("reason_end")reasonEnd: String,
-                        skipped: Boolean,
+case class SpotifyEntry(timestamp: String,
+                        msPlayed: Int,
+                        track: Option[String],
+                        artist: Option[String],
+                        album: Option[String],
+                        reasonStart: String,
+                        reasonEnd: String,
+                        skipped: Option[Boolean],
                         offline: Boolean,
-                        @JsonProperty("incognito_mode")incognitoMode: Boolean)
+                        incognitoMode: Boolean)
+
+given ReadWriter[SpotifyEntry] =
+  readwriter[ujson.Obj].bimap[SpotifyEntry] (
+    e =>
+      ujson.Obj(
+        "ts" -> e.timestamp,
+        "ms_played" -> e.msPlayed,
+        "master_metadata_track_name" -> e.track,
+        "master_metadata_album_artist_name" -> e.artist,
+        "master_metadata_album_album_name" -> e.album,
+        "reason_start" -> e.reasonStart,
+        "reason_end" -> e.reasonEnd,
+        "incognito_mode" -> e.incognitoMode,
+        "skipped" -> e.skipped,
+        "offline" -> e.offline
+      ),
+    json =>
+      SpotifyEntry(
+        timestamp = json("ts").str,
+        msPlayed = json("ms_played").num.toInt,
+        track = json("master_metadata_track_name").strOpt,
+        artist = json("master_metadata_album_artist_name").strOpt,
+        album = json("master_metadata_album_album_name").strOpt,
+        reasonStart = json("reason_start").str,
+        reasonEnd = json("reason_end").str,
+        incognitoMode = json("incognito_mode").bool,
+        skipped = json("skipped").boolOpt,
+        offline = json("offline").bool
+      )
+  )
