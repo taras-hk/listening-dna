@@ -1,0 +1,37 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: listening-dna
+  labels:
+    app: listening-dna
+spec:
+  type: ClusterIP
+  selector:
+    app: listening-dna
+  ports:
+    - name: tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: listening-dna
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: listening-dna
+  template:
+    metadata:
+      labels:
+        app: listening-dna
+        version: v1
+    spec:
+      containers:
+      - name: listening-dna
+        image: listening-dna
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080

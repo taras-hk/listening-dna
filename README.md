@@ -29,10 +29,8 @@ The project picks apart the **Spotify Extended Streaming History**, which is bas
 
 To keep this creative and fast, I’m sticking to a stack that doesn't feel like "work":
 
-* **Scala 3**: Using the clean syntax and the type system to model the domain without the usual mess.
-* **Scala CLI**: No heavy build tools or deep folder nesting. It’s just about running the code and seeing the results.
-* **Scala Toolkit**: I mean, why not?
-
+* **Java 25**: Latest and greatest.
+* **Helidon**: SE edition to avoid annotation-driven-development fatigue.
 
 ---
 
