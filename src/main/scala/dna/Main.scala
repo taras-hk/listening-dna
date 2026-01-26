@@ -1,13 +1,11 @@
 package dna
 
-import dna.domain.ListenEntry
 import dna.infrastructure.SpotifyJsonParse
 
 import java.nio.file.{Files, Paths}
-import java.time.Duration
 import scala.io.Source
-import scala.util.Using
 import scala.jdk.CollectionConverters.*
+import scala.util.Using
 
 
 @main def hello(): Unit =
@@ -28,4 +26,9 @@ import scala.jdk.CollectionConverters.*
   val b = domain.Analysis.allTimeTopTracks(listens)
   val c = domain.Analysis.allTimeTopAlbums(listens)
   val d = domain.Analysis.allTimeTopArtistByListenTime(listens)
+  val e = domain.Analysis.favouriteHourOfDay(listens)
+  val f = domain.Analysis.nightDwellerScore(listens)
+  val g = domain.Analysis.mostSkippable(listens)
+  val h = domain.Analysis.mostEnd2EndTrack(listens)
+  val i = domain.Analysis.tooAfraidTooShare(listens)
   println(a)

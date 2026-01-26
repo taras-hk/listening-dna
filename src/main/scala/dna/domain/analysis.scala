@@ -1,7 +1,6 @@
 package dna.domain
 
-import java.time.Duration
-import java.time.temporal.ChronoField
+import java.time.{Duration, ZoneId}
 
 object Analysis:
 
@@ -59,3 +58,53 @@ object Analysis:
       .toList
       .sortBy(-_._2)
       .take(top)
+
+  // TODO good for now as it is not going to move beyond my data
+  private val myZone = ZoneId.of("Europe/Kyiv")
+
+  def favouriteHourOfDay(listens: List[ListenEntry]): List[(Int, Int)] =
+    listens
+      .map(_.timestamp.atZone(myZone).getHour)
+      .groupMapReduce(identity)(_ => 1)(_ + _)
+      .toList
+      .sortBy(-_._2)
+      .take(1)
+
+  def nightDwellerScore(listens: List[ListenEntry]): Double =
+    listens
+      .map(_.timestamp.atZone(myZone).getHour)
+      .count(hour => hour >= 5 && hour <= 8) / listens.length.toDouble
+
+  def mostSkippable(listens: List[ListenEntry], top: Int = 10): List[(Track, Int)] =
+    case class FlopTrack(track: Track, reasonEnd: String)
+
+    listens
+      .filter(_.isSkipped)
+      .flatMap(entry => entry.track.map(t => FlopTrack(t, entry.reasonEnd)))
+      .groupMapReduce(identity)(_ => 1)(_ + _)
+      .toList
+      .sortBy(-_._2)
+      .take(top)
+      .map((ft, count) => (ft.track, count))
+
+  def mostEnd2EndTrack(listens: List[ListenEntry], top: Int = 10): List[(Track, Int)] =
+    case class TrackDone(track: Track, reasonEnd: String)
+
+    listens
+      .filter(_.isTrackDone)
+      .flatMap(entry => entry.track.map(t => TrackDone(t, entry.reasonEnd)))
+      .groupMapReduce(identity)(_ => 1)(_ + _)
+      .toList
+      .sortBy(-_._2)
+      .take(top)
+      .map((td, count) => (td.track, count))
+
+  def tooAfraidTooShare(listens: List[ListenEntry], top: Int = 10): List[(Track, Int)] =
+    listens
+      .filter(_.incognitoMode)
+      .flatMap(entry => entry.track)
+      .groupMapReduce(identity)(_ => 1)(_ + _)
+      .toList
+      .sortBy(-_._2)
+      .take(top)
+      .map((t, count) => (t, count))

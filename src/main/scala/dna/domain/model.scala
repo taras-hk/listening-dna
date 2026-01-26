@@ -21,4 +21,13 @@ case class ListenEntry(timestamp: Instant,
                        reasonEnd: String,
                        skipped: Option[Boolean],
                        offline: Boolean,
-                       incognitoMode: Boolean)
+                       incognitoMode: Boolean):
+
+  def isSkipped: Boolean =
+    skipped match {
+      case Some(v) => v
+      case _ => false
+    }
+    
+  def isTrackDone: Boolean =
+    reasonEnd == "trackdone"
