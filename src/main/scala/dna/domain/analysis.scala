@@ -4,15 +4,19 @@ import java.time.{Duration, ZoneId}
 
 object Analysis:
 
-  def detectSessions(listens: List[ListenEntry], sessionDuration: Duration): List[List[ListenEntry]] =
+  def detectSessions(
+      listens: List[ListenEntry],
+      sessionDuration: Duration
+  ): List[List[ListenEntry]] =
     listens match
-      case Nil => Nil
+      case Nil          => Nil
       case head :: tail =>
         tail
           .foldLeft(List(List(head))) { (sessions, entry) =>
             val currentSession = sessions.head
 
-            val gap = Duration.between(currentSession.head.timestamp, entry.timestamp)
+            val gap =
+              Duration.between(currentSession.head.timestamp, entry.timestamp)
 
             if gap.compareTo(sessionDuration) >= 0
             then List(entry) :: sessions
@@ -21,37 +25,70 @@ object Analysis:
           .map(_.reverse)
           .reverse
 
-  def calculateLongestSessionByTracks(sessions: List[List[ListenEntry]]): List[ListenEntry] =
+  def calculateLongestSessionByTracks(
+      sessions: List[List[ListenEntry]]
+  ): List[ListenEntry] =
     sessions.maxBy(_.length)
 
-  def calculateShortestSessionByTracks(sessions: List[List[ListenEntry]]): List[ListenEntry] =
+  def calculateShortestSessionByTracks(
+      sessions: List[List[ListenEntry]]
+  ): List[ListenEntry] =
     sessions.minBy(_.length)
 
-  def calculateLongestSessionByDuration(sessions: List[List[ListenEntry]]): List[ListenEntry] =
+  def calculateLongestSessionByDuration(
+      sessions: List[List[ListenEntry]]
+  ): List[ListenEntry] =
     sessions.maxBy(_.map(_.msPlayed).sum)
 
-  def calculateShortestSessionByDuration(sessions: List[List[ListenEntry]]): List[ListenEntry] =
+  def calculateShortestSessionByDuration(
+      sessions: List[List[ListenEntry]]
+  ): List[ListenEntry] =
     sessions.minBy(_.map(_.msPlayed).sum)
 
-  def allTimeTopArtistByListenTime(listens: List[ListenEntry], top: Int = 10): List[(Artist, MsPlayed)] =
+  def allTimeTopArtistByListenTime(
+      listens: List[ListenEntry],
+      top: Int = 10
+  ): List[(Artist, MsPlayed)] =
     case class ArtistListenTime(name: Artist, msPlayed: MsPlayed)
     listens
-      .flatMap(entry => entry.artist.map(artist => ArtistListenTime(artist, entry.msPlayed)))
+      .flatMap(entry =>
+        entry.artist.map(artist => ArtistListenTime(artist, entry.msPlayed))
+      )
       .groupMapReduce(_.name)(_.msPlayed)(_ + _)
       .toList
       .sortBy(-_._2)
       .take(top)
 
-  def allTimeTopArtists(listens: List[ListenEntry], top: Int = 10): List[(Artist, Int)] =
+  def allTimeTopArtists(
+      listens: List[ListenEntry],
+      top: Int = 10
+  ): List[(Artist, Int)] =
     allTimeTopCalculator(_.artist, listens, top)
 
-  def allTimeTopTracks(listens: List[ListenEntry], top: Int = 10): List[(Artist, Int)] =
+  def allTimeTopTracks(
+      listens: List[ListenEntry],
+      top: Int = 10
+  ): List[(Artist, Int)] =
     allTimeTopCalculator(_.track, listens, top)
 
-  def allTimeTopAlbums(listens: List[ListenEntry], top: Int = 10): List[(Artist, Int)] =
+  def allTimeTopAlbums(
+      listens: List[ListenEntry],
+      top: Int = 10
+  ): List[(Artist, Int)] =
     allTimeTopCalculator(_.album, listens, top)
 
-  private def allTimeTopCalculator(keyExtractor: ListenEntry => Option[String], listens: List[ListenEntry], top: Int): List[(Artist, Int)] =
+  def getTrackIds(listens: List[ListenEntry]): Set[String] =
+    listens
+      .flatMap(_.trackUri.map { uri =>
+        uri.replace("spotify:track:", "")
+      })
+      .toSet
+
+  private def allTimeTopCalculator(
+      keyExtractor: ListenEntry => Option[String],
+      listens: List[ListenEntry],
+      top: Int
+  ): List[(Artist, Int)] =
     listens
       .flatMap(keyExtractor)
       .groupMapReduce(identity)(_ => 1)(_ + _)
@@ -75,7 +112,10 @@ object Analysis:
       .map(_.timestamp.atZone(myZone).getHour)
       .count(hour => hour >= 5 && hour <= 8) / listens.length.toDouble
 
-  def mostSkippable(listens: List[ListenEntry], top: Int = 10): List[(Track, Int)] =
+  def mostSkippable(
+      listens: List[ListenEntry],
+      top: Int = 10
+  ): List[(Track, Int)] =
     case class FlopTrack(track: Track, reasonEnd: String)
 
     listens
@@ -87,7 +127,10 @@ object Analysis:
       .take(top)
       .map((ft, count) => (ft.track, count))
 
-  def mostEnd2EndTrack(listens: List[ListenEntry], top: Int = 10): List[(Track, Int)] =
+  def mostEnd2EndTrack(
+      listens: List[ListenEntry],
+      top: Int = 10
+  ): List[(Track, Int)] =
     case class TrackDone(track: Track, reasonEnd: String)
 
     listens
@@ -99,7 +142,10 @@ object Analysis:
       .take(top)
       .map((td, count) => (td.track, count))
 
-  def tooAfraidTooShare(listens: List[ListenEntry], top: Int = 10): List[(Track, Int)] =
+  def tooAfraidTooShare(
+      listens: List[ListenEntry],
+      top: Int = 10
+  ): List[(Track, Int)] =
     listens
       .filter(_.incognitoMode)
       .flatMap(entry => entry.track)
